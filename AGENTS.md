@@ -5,7 +5,8 @@ before execution. Keep zsh 5.0+ support, `jq` optional, and runtime dependencies
 limited to zsh, `curl`, and `perl`.
 
 `zsh-ai.plugin.zsh` loads `lib/config.zsh`, context detection in `lib/context.zsh`,
-`@file` attachment handling in `lib/attach.zsh`, provider modules in
+`@file` attachment handling in `lib/attach.zsh`, session command history in
+`lib/history.zsh`, provider modules in
 `lib/providers/`, prompt construction and the direct command in `lib/utils.zsh`,
 and the Enter hook in `lib/widget.zsh`.
 

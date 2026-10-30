@@ -205,6 +205,36 @@ per-file limit is truncated and the request says so, including its real size.
 Attachments leave the machine with the rest of the request. Read a file you are
 willing to send to your provider.
 
+### Session history
+
+Every command the shell runs is recorded with its exit status, so a follow-up
+question can say "that" instead of repeating a path or a failing test name:
+
+```zsh
+# why did that fail
+```
+
+| Variable | Default | Meaning |
+| --- | --- | --- |
+| `ZSH_AI_SESSION_HISTORY` | `true` | record commands; set `false` to disable |
+| `ZSH_AI_SESSION_HISTORY_MAX` | `48` | most recent commands kept |
+| `ZSH_AI_SESSION_HISTORY_CMD_MAX` | `200` | characters kept per command |
+| `ZSH_AI_SESSION_HISTORY_REDACT` | `true` | redact credential-shaped arguments |
+
+The list lives in the shell's memory and is never written to disk. Redaction
+covers `sk_`/`ghp_`/`AKIA`/`xox`-style tokens, anything after `password=`,
+`token:`, `api_key=` and similar labels, 32-character hex and UUID-shaped
+strings. Git's 40-character commit hashes are deliberately left readable,
+because they are ordinary arguments to ordinary commands.
+
+Recording needs no API key and costs nothing until a query is made. To inspect
+what would be sent: `_zsh_ai_session_history_context`.
+
+The precmd hook that reads exit statuses must be registered before any other
+precmd hook, which is why the plugin registers it at load time. If you initialise
+your prompt theme before sourcing this plugin, statuses may be distorted by that
+theme's own precmd hook; source the plugin first.
+
 ### Prompt preferences
 
 Add instructions without replacing the built-in command and quoting rules:

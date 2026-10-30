@@ -130,6 +130,14 @@ _zsh_ai_build_context() {
         context="$context\n$git_context"
     fi
     
+    # Add what this shell has already run
+    if (( $+functions[_zsh_ai_session_history_context] )); then
+        local history_context=$(_zsh_ai_session_history_context)
+        if [[ -n "$history_context" ]]; then
+            context="$context\n$history_context"
+        fi
+    fi
+
     # Add OS context
     context="$context\nOS: $(uname -s)"
     
