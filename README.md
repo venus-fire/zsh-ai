@@ -130,7 +130,7 @@ a claim on his design.
 - `lib/attach.zsh` and `lib/history.zsh` as new modules, 33 new tests, and the
   docs describing the above.
 
-The fork's commits are `cc64205` and later on `feature/context-and-attachments`.
-Everything before that is upstream history, unchanged.
+The fork's commits are `cc64205` and `eece5bf` on `main`, which sits directly on
+top of upstream `629d46d`. Everything before that is upstream history, unchanged.
 
 [Troubleshooting](TROUBLESHOOTING.md) · [Contributing](CONTRIBUTING.md) · [MIT license](LICENSE)
