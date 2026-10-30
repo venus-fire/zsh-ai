@@ -96,6 +96,8 @@ _zsh_ai_init_widget() {
 
     _zsh_ai_do_init() {
         zle -N accept-line _zsh_ai_accept_line
+        # Register @file completion once compinit has certainly run.
+        (( $+functions[_zsh_ai_register_completion] )) && _zsh_ai_register_completion
         add-zsh-hook -d precmd _zsh_ai_do_init
     }
     autoload -Uz add-zsh-hook

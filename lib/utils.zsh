@@ -25,26 +25,33 @@ _zsh_ai_escape_json() {
 _zsh_ai_query() {
     local query="$1"
 
+    # Attach any @file references before routing, so every provider receives the
+    # request and the files it points at as one user message.
+    local user_message="$query"
+    if (( $+functions[_zsh_ai_build_user_message] )); then
+        user_message=$(_zsh_ai_build_user_message "$query")
+    fi
+
     if [[ "$ZSH_AI_PROVIDER" == "ollama" ]]; then
         # The check prints its own user-facing error when Ollama is unreachable
         _zsh_ai_check_ollama || return 1
-        _zsh_ai_query_ollama "$query"
+        _zsh_ai_query_ollama "$user_message"
     elif [[ "$ZSH_AI_PROVIDER" == "apfel" ]]; then
-        _zsh_ai_query_apfel "$query"
+        _zsh_ai_query_apfel "$user_message"
     elif [[ "$ZSH_AI_PROVIDER" == "gemini" ]]; then
-        _zsh_ai_query_gemini "$query"
+        _zsh_ai_query_gemini "$user_message"
     elif [[ "$ZSH_AI_PROVIDER" == "openai" ]]; then
-        _zsh_ai_query_openai "$query"
+        _zsh_ai_query_openai "$user_message"
     elif [[ "$ZSH_AI_PROVIDER" == "qwen" ]]; then
-        _zsh_ai_query_qwen "$query"
+        _zsh_ai_query_qwen "$user_message"
     elif [[ "$ZSH_AI_PROVIDER" == "grok" ]]; then
-        _zsh_ai_query_grok "$query"
+        _zsh_ai_query_grok "$user_message"
     elif [[ "$ZSH_AI_PROVIDER" == "mistral" ]]; then
-        _zsh_ai_query_mistral "$query"
+        _zsh_ai_query_mistral "$user_message"
     elif [[ "$ZSH_AI_PROVIDER" == "custom" ]]; then
-        _zsh_ai_query_custom "$query"
+        _zsh_ai_query_custom "$user_message"
 	else
-        _zsh_ai_query_anthropic "$query"
+        _zsh_ai_query_anthropic "$user_message"
     fi
 }
 

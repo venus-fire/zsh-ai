@@ -251,48 +251,103 @@ test_shows_current_directory_in_context() {
     teardown_test_env
 }
 
-test_lists_files_when_less_than_20() {
+test_tree_lists_nested_entries() {
     setup_test_env
     local TEST_DIR=$(create_test_dir)
     cd "$TEST_DIR"
-    
-    touch file1.txt file2.txt file3.txt
+
+    touch top.txt
+    mkdir -p sub
+    touch sub/inner.txt
     local output=$(_zsh_ai_get_directory_context)
-    assert_contains "$output" "Files: file1.txt, file2.txt, file3.txt"
-    
+    assert_contains "$output" "Tree (depth 2):"
+    assert_contains "$output" "top.txt"
+    assert_contains "$output" "sub/"
+    assert_contains "$output" "sub/inner.txt"
+
     cd - >/dev/null 2>&1
     cleanup_test_dir "$TEST_DIR"
     teardown_test_env
 }
 
-test_truncates_file_list_at_10_files() {
+test_tree_lists_directory_with_trailing_slash() {
     setup_test_env
     local TEST_DIR=$(create_test_dir)
     cd "$TEST_DIR"
-    
+
+    mkdir -p lib
+    touch lib/a.zsh
+    _zsh_ai_tree_listing
+    assert_contains "$_ZSH_AI_TREE_LISTING" "lib/"
+
+    cd - >/dev/null 2>&1
+    cleanup_test_dir "$TEST_DIR"
+    teardown_test_env
+}
+
+test_tree_caps_entries_at_max() {
+    setup_test_env
+    local TEST_DIR=$(create_test_dir)
+    cd "$TEST_DIR"
+
     for i in {1..15}; do
         touch "file$i.txt"
     done
-    local output=$(_zsh_ai_get_directory_context)
-    assert_contains "$output" "Files:"
-    assert_contains "$output" "... and 5 more"
-    
+    local output=$(ZSH_AI_TREE_MAX=5 _zsh_ai_get_directory_context)
+    assert_contains "$output" "10 of 15 entries omitted"
+
     cd - >/dev/null 2>&1
     cleanup_test_dir "$TEST_DIR"
     teardown_test_env
 }
 
-test_shows_file_count_for_many_files() {
+test_tree_prunes_noise_directories() {
     setup_test_env
     local TEST_DIR=$(create_test_dir)
     cd "$TEST_DIR"
-    
-    for i in {1..25}; do
+
+    mkdir -p node_modules/pkg .git/objects __pycache__
+    touch node_modules/pkg/index.js
+    touch keep.txt
+    local output=$(_zsh_ai_get_directory_context)
+    assert_not_contains "$output" "node_modules"
+    assert_not_contains "$output" "__pycache__"
+    assert_contains "$output" "keep.txt"
+
+    cd - >/dev/null 2>&1
+    cleanup_test_dir "$TEST_DIR"
+    teardown_test_env
+}
+
+test_tree_depth_is_configurable() {
+    setup_test_env
+    local TEST_DIR=$(create_test_dir)
+    cd "$TEST_DIR"
+
+    mkdir -p sub
+    touch sub/inner.txt
+    local output=$(ZSH_AI_TREE_DEPTH=1 _zsh_ai_get_directory_context)
+    assert_contains "$output" "Tree (depth 1):"
+    assert_contains "$output" "sub/"
+    assert_not_contains "$output" "sub/inner.txt"
+
+    cd - >/dev/null 2>&1
+    cleanup_test_dir "$TEST_DIR"
+    teardown_test_env
+}
+
+test_tree_disabled_falls_back_to_count() {
+    setup_test_env
+    local TEST_DIR=$(create_test_dir)
+    cd "$TEST_DIR"
+
+    for i in {1..4}; do
         touch "file$i.txt"
     done
-    local output=$(_zsh_ai_get_directory_context)
-    assert_contains "$output" "Files: 25 files in directory"
-    
+    local output=$(ZSH_AI_TREE_DEPTH=0 _zsh_ai_get_directory_context)
+    assert_contains "$output" "Files: 4 files in directory"
+    assert_not_contains "$output" "Tree ("
+
     cd - >/dev/null 2>&1
     cleanup_test_dir "$TEST_DIR"
     teardown_test_env
@@ -383,9 +438,12 @@ run_test "Returns empty string for non-git directory" test_returns_empty_for_non
 run_test "Gets git context for git repository" test_gets_git_context_for_repository
 run_test "Detects dirty git status" test_detects_dirty_git_status
 run_test "Shows current directory in context" test_shows_current_directory_in_context
-run_test "Lists files when less than 20" test_lists_files_when_less_than_20
-run_test "Truncates file list at 10 files" test_truncates_file_list_at_10_files
-run_test "Shows file count for directories with many files" test_shows_file_count_for_many_files
+run_test "Lists nested tree entries" test_tree_lists_nested_entries
+run_test "Suffixes directories with a slash" test_tree_lists_directory_with_trailing_slash
+run_test "Caps tree entries at the configured max" test_tree_caps_entries_at_max
+run_test "Prunes noise directories" test_tree_prunes_noise_directories
+run_test "Honours configured tree depth" test_tree_depth_is_configurable
+run_test "Falls back to a count when the tree is disabled" test_tree_disabled_falls_back_to_count
 run_test "Builds complete context" test_builds_complete_context
 run_test "Builds context without git" test_builds_context_without_git
 run_test "Builds context for unknown project" test_builds_context_for_unknown_project

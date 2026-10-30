@@ -45,24 +45,70 @@ _zsh_ai_get_git_context() {
     echo "$git_info"
 }
 
+# Function to list the working directory as a shallow tree.
+# Walks ZSH_AI_TREE_DEPTH levels (default 2), prunes VCS metadata, dependency
+# trees and caches, and caps the listing at ZSH_AI_TREE_MAX entries (default 48).
+# Results are written to globals rather than printed, because a command
+# substitution would run in a subshell and lose them:
+#   _ZSH_AI_TREE_LISTING - comma-separated entries, directories suffixed with /
+#   _ZSH_AI_TREE_TOTAL   - entries found
+#   _ZSH_AI_TREE_OMITTED - entries cut by the cap
+_zsh_ai_tree_listing() {
+    local depth="${ZSH_AI_TREE_DEPTH:-2}"
+    local max="${ZSH_AI_TREE_MAX:-48}"
+    local -a raw out
+    local entry
+
+    _ZSH_AI_TREE_TOTAL=0
+    _ZSH_AI_TREE_OMITTED=0
+
+    raw=("${(@f)$(find . -mindepth 1 -maxdepth "$depth" \
+        \( -name '.git' -o -name '.hg' -o -name '.svn' \
+           -o -name 'node_modules' -o -name '.venv' -o -name 'venv' \
+           -o -name '__pycache__' -o -name '.mypy_cache' -o -name '.pytest_cache' \
+           -o -name '.ruff_cache' -o -name 'target' -o -name 'dist' \
+           -o -name 'build' -o -name '.next' -o -name '.cache' \
+           -o -name '.idea' -o -name '.vscode' -o -name '.tox' \
+           -o -name '.gradle' -o -name '.terraform' \) -prune -o -print 2>/dev/null \
+        | LC_ALL=C sort)}")
+
+    for entry in "${raw[@]}"; do
+        [[ -z "$entry" ]] && continue
+        entry="${entry#./}"
+        [[ -d "$entry" ]] && entry="${entry%/}/"
+        out+=("$entry")
+    done
+
+    _ZSH_AI_TREE_TOTAL=${#out}
+    if [[ "$max" == <1-> ]] && (( ${#out} > max )); then
+        _ZSH_AI_TREE_OMITTED=$(( ${#out} - max ))
+        out=("${(@)out[1,$max]}")
+    fi
+
+    _ZSH_AI_TREE_LISTING="${(j:, :)out}"
+}
+
 # Function to get directory context
 _zsh_ai_get_directory_context() {
+    local depth="${ZSH_AI_TREE_DEPTH:-2}"
     local dir_context="Current directory: $(pwd)"
-    local file_count=$(ls -1 2>/dev/null | wc -l | tr -d ' ')
-    
-    if [[ $file_count -le 20 ]]; then
-        local files=$(ls -1 2>/dev/null | head -10 | tr '\n' ',' | sed 's/,$//' | sed 's/,/, /g')
-        if [[ -n "$files" ]]; then
-            dir_context="$dir_context\nFiles: $files"
-            if [[ $file_count -gt 10 ]]; then
-                dir_context="$dir_context ... and $((file_count - 10)) more"
-            fi
+    local listing
+
+    if [[ "$depth" == <1-> ]]; then
+        _zsh_ai_tree_listing
+        listing="$_ZSH_AI_TREE_LISTING"
+        if (( ${_ZSH_AI_TREE_TOTAL:-0} == 0 )); then
+            dir_context+=$'\n'"Tree (depth $depth): empty"
+        elif (( ${_ZSH_AI_TREE_OMITTED:-0} > 0 )); then
+            dir_context+=$'\n'"Tree (depth $depth, ${_ZSH_AI_TREE_OMITTED} of ${_ZSH_AI_TREE_TOTAL} entries omitted): $listing"
+        else
+            dir_context+=$'\n'"Tree (depth $depth): $listing"
         fi
     else
-        dir_context="$dir_context\nFiles: $file_count files in directory"
+        dir_context+=$'\n'"Files: $(ls -1 2>/dev/null | wc -l | tr -d ' ') files in directory"
     fi
-    
-    echo "$dir_context"
+
+    print -r -- "$dir_context"
 }
 
 # Function to build context

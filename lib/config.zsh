@@ -26,6 +26,22 @@
 : ${ZSH_AI_COMMENT_HOOK:="true"}  # Set to false/off/no/0 to disable the inline trigger widget entirely
 : ${ZSH_AI_TRIGGER:="# "}  # Prompt prefix that triggers AI (e.g. ",," instead of "# ")
 
+# Context configuration
+# ZSH_AI_TREE_DEPTH - how many directory levels to describe (default 2; 0 disables the tree)
+# ZSH_AI_TREE_MAX   - maximum number of entries listed in the tree (default 48)
+: ${ZSH_AI_TREE_DEPTH:=2}
+: ${ZSH_AI_TREE_MAX:=48}
+
+# Attachment configuration
+# A query token prefixed with @ reads that file and inlines it into the request.
+# ZSH_AI_ATTACH_MAX_FILES   - files attached per query (default 8)
+# ZSH_AI_ATTACH_MAX_BYTES   - bytes read per file (default 8192)
+# ZSH_AI_ATTACH_TOTAL_BYTES - bytes read across all files (default 32768)
+: ${ZSH_AI_ATTACH_MAX_FILES:=8}
+: ${ZSH_AI_ATTACH_MAX_BYTES:=8192}
+: ${ZSH_AI_ATTACH_TOTAL_BYTES:=32768}
+
+
 # Return 0 if the inline trigger widget should be enabled, 1 otherwise
 _zsh_ai_comment_hook_enabled() {
     case "${ZSH_AI_COMMENT_HOOK:l}" in

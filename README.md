@@ -21,9 +21,20 @@ You can also ask directly:
 zsh-ai "show what is using port 3000"
 ```
 
-Your request includes the directory path, nearby filenames, project type, git
-branch/status, and OS. Choose a hosted provider, or run a local model with
-Ollama or Apfel. Apfel uses Apple's on-device model on supported Macs.
+Your request includes the directory path, a two-level tree of the working
+directory, project type, git branch/status, and OS. Choose a hosted provider, or
+run a local model with Ollama or Apfel. Apfel uses Apple's on-device model on
+supported Macs.
+
+Attach files by prefixing a word with `@`, and press Tab to complete the path:
+
+```console
+$ # why does @src/main.py exit 1 when --verbose is set
+```
+
+The file is read at query time and sent with the request, so the model sees the
+code and not just its name. Attachments are capped at 8192 bytes per file and
+32768 bytes per query.
 
 ## Install
 

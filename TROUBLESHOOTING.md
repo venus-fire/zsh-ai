@@ -70,6 +70,17 @@ Put the setting before the plugin loads, then open a new terminal.
 
 Install `jq` with `brew install jq` or `sudo apt-get install jq`, then retry.
 
+## An attached file was not sent
+
+Check three things, in this order. The word must start with `@` and nothing
+before it, so a mail address does not count. The path resolves from the current
+directory, not from the query text. And the file must be readable text: files
+containing NUL bytes are skipped by name, and a file larger than
+`ZSH_AI_ATTACH_MAX_BYTES` is sent truncated with a note saying so.
+
+Run `_zsh_ai_attach_paths "your query"` to see which paths resolve, and
+`_zsh_ai_attach_block "your query"` to see exactly what would be sent.
+
 ## Still stuck?
 
 Run `zsh-ai` with no arguments to check the active provider. [Open an

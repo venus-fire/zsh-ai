@@ -5,8 +5,18 @@ before execution. Keep zsh 5.0+ support, `jq` optional, and runtime dependencies
 limited to zsh, `curl`, and `perl`.
 
 `zsh-ai.plugin.zsh` loads `lib/config.zsh`, context detection in `lib/context.zsh`,
-provider modules in `lib/providers/`, prompt construction and the direct command
-in `lib/utils.zsh`, and the Enter hook in `lib/widget.zsh`.
+`@file` attachment handling in `lib/attach.zsh`, provider modules in
+`lib/providers/`, prompt construction and the direct command in `lib/utils.zsh`,
+and the Enter hook in `lib/widget.zsh`.
+
+Two traps worth knowing before editing the shell code:
+
+- Never name a local variable `path`. In zsh `path` is a special array tied to
+  `PATH`, so `local path=/some/file` rewrites `PATH` for the rest of the
+  function and external commands stop resolving.
+- `_zsh_ai_tree_listing` writes its results to globals rather than printing,
+  because callers need the counts and a command substitution would run in a
+  subshell and lose them.
 
 Run `./run-tests.zsh`; see [CONTRIBUTING.md](CONTRIBUTING.md) for focused runs and
 test conventions. For behavior changes, check both `# ...` and `zsh-ai "..."`.

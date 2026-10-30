@@ -162,6 +162,49 @@ Use `ZSH_AI_<PROVIDER>_URL` to change an endpoint (built-in providers except Gem
 Ollama expects a base URL, such as `http://localhost:11434`, with no `/v1` suffix.
 The others expect the full API URL. See [lib/config.zsh](lib/config.zsh) for defaults.
 
+### Context
+
+The request describes the working directory as a shallow tree rather than a flat
+file list. Both limits are configurable:
+
+```zsh
+export ZSH_AI_TREE_DEPTH=2   # levels to describe; 0 falls back to a file count
+export ZSH_AI_TREE_MAX=48    # maximum entries listed
+```
+
+VCS metadata, dependency trees and caches (`.git`, `node_modules`, `.venv`,
+`__pycache__`, `target`, `dist`, `build`, `.next`, `.cache`, `.idea`, `.vscode`,
+`.tox`, `.gradle`, `.terraform`) are pruned before the cap is applied, so the 48
+entries you send are project files rather than library noise.
+
+### Attaching files
+
+Any query word prefixed with `@` is resolved against the working directory. If
+it names a readable regular file, the file is read and inlined into the request:
+
+```zsh
+# refactor @scripts/deploy.sh to fail on a missing argument
+# diff @package.json against @package-lock.json
+```
+
+Tab completes the path with the `@` kept in place. `@@` writes a literal `@` and
+never attaches anything. Missing paths are ignored silently, so a stray `@` in a
+mail address costs nothing.
+
+Limits, all overridable before the plugin loads:
+
+| Variable | Default | Meaning |
+| --- | --- | --- |
+| `ZSH_AI_ATTACH_MAX_FILES` | `8` | files attached per query |
+| `ZSH_AI_ATTACH_MAX_BYTES` | `8192` | bytes read per file |
+| `ZSH_AI_ATTACH_TOTAL_BYTES` | `32768` | bytes read across the whole query |
+
+Binary files are detected by NUL bytes and skipped by name. A file over the
+per-file limit is truncated and the request says so, including its real size.
+
+Attachments leave the machine with the rest of the request. Read a file you are
+willing to send to your provider.
+
 ### Prompt preferences
 
 Add instructions without replacing the built-in command and quoting rules:
